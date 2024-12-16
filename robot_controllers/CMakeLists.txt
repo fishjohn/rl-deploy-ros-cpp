@@ -11,64 +11,88 @@ project(robot_controllers)
 # Find the Eigen3 library required for linear algebra operations
 find_package(Eigen3 REQUIRED)
 
+# Find the OpenCV library required for image processing
+find_package(OpenCV REQUIRED)
+
 # Enable generation of compile commands database (used by some code editors)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ## Find catkin macros and libraries
 # Find and specify required catkin packages and components
-find_package(catkin REQUIRED 
-  COMPONENTS
-  roscpp
-  pointfoot_sdk_lowlevel
-  robot_common
-  robot_description
-  controller_interface
-  angles
+find_package(catkin REQUIRED
+        COMPONENTS
+        roscpp
+        pointfoot_sdk_lowlevel
+        robot_common
+        robot_description
+        controller_interface
+        angles
 )
 
 # Specify catkin-specific package configuration
 catkin_package(
-  INCLUDE_DIRS
-  include
-  LIBRARIES
-  ${PROJECT_NAME}
-  CATKIN_DEPENDS
-  roscpp
-  pointfoot_sdk_lowlevel
-  robot_common
-  robot_description
-  controller_interface
-  angles
+        INCLUDE_DIRS
+        include
+        LIBRARIES
+        ${PROJECT_NAME}
+        CATKIN_DEPENDS
+        roscpp
+        pointfoot_sdk_lowlevel
+        robot_common
+        robot_description
+        controller_interface
+        angles
 )
 
 # Include directories for header files
 include_directories(
-  include
-  ${CATKIN_DEVEL_PREFIX}/include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
+        include
+        ${CATKIN_DEVEL_PREFIX}/include
+        ${EIGEN3_INCLUDE_DIRS}
+        ${catkin_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
 )
 
 link_directories(${CATKIN_DEVEL_PREFIX}/lib)
 
 # Add a shared library target
 add_library(${PROJECT_NAME} SHARED
-  src/ControllerBase.cpp
-  src/PointfootController.cpp
+        src/ControllerBase.cpp
+        src/PointfootController.cpp
+)
+
+add_library(pointfoot_vision_controller
+        src/ControllerBase.cpp
+        src/PointfootController.cpp
+        src/PointfootVisionController.cpp
 )
 
 # Link libraries to the target
 target_link_libraries(${PROJECT_NAME}
-  pointfoot_sdk_lowlevel
-  ${catkin_LIBRARIES}  # Link with catkin libraries
-  onnxruntime          # Link with onnxruntime library
+        pointfoot_sdk_lowlevel
+        ${catkin_LIBRARIES}  # Link with catkin libraries
+        ${OpenCV_LIBRARIES}  # Link with opencv libraries
+        onnxruntime          # Link with onnxruntime library
+)
+
+target_link_libraries(pointfoot_vision_controller
+        pointfoot_sdk_lowlevel
+        ${catkin_LIBRARIES}  # Link with catkin libraries
+        ${OpenCV_LIBRARIES}  # Link with opencv libraries
+        onnxruntime          # Link with onnxruntime library
 )
 
 # Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS pointfoot_vision_controller
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
@@ -79,3 +103,4 @@ install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 # Mark other files for installation
 install(FILES robot_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(FILES robot_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

@@ -5,19 +5,19 @@
 #include "robot_controllers/PointfootController.h"
 
 #include <angles/angles.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <std_msgs/Float32MultiArray.h>
 #include <numeric>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace robot_controller {
 
 // Initialize the controller
-bool PointfootController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &nh) {
+bool PointfootController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& nh) {
   return ControllerBase::init(robot_hw, nh);
 }
 
 // Perform initialization when the controller starts
-void PointfootController::starting(const ros::Time &time) {
+void PointfootController::starting(const ros::Time& time) {
   for (size_t i = 0; i < hybridJointHandles_.size(); i++) {
     ROS_INFO_STREAM("starting hybridJointHandle: " << hybridJointHandles_[i].getPosition());
     defaultJointAngles_[i] = hybridJointHandles_[i].getPosition();
@@ -31,7 +31,7 @@ void PointfootController::starting(const ros::Time &time) {
 }
 
 // Update function called periodically
-void PointfootController::update(const ros::Time &time, const ros::Duration &period) {
+void PointfootController::update(const ros::Time& time, const ros::Duration& period) {
   switch (mode_) {
     case Mode::STAND:
       handleStandMode();
@@ -80,12 +80,10 @@ void PointfootController::handleWalkMode() {
     actions_[i] = std::max(actionMin / robotCfg_.controlCfg.action_scale_pos,
                            std::min(actionMax / robotCfg_.controlCfg.action_scale_pos, (scalar_t)actions_[i]));
     scalar_t pos_des = actions_[i] * robotCfg_.controlCfg.action_scale_pos + initJointAngles_(i, 0);
-    hybridJointHandles_[i].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness, robotCfg_.controlCfg.damping,
-                                      0, 2);
+    hybridJointHandles_[i].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness, robotCfg_.controlCfg.damping, 0, 2);
 
     lastActions_(i, 0) = actions_[i];
   }
-
 }
 
 // Handle standing mode
@@ -93,8 +91,7 @@ void PointfootController::handleStandMode() {
   if (standPercent_ < 1) {
     for (int j = 0; j < hybridJointHandles_.size(); j++) {
       scalar_t pos_des = defaultJointAngles_[j] * (1 - standPercent_) + initJointAngles_[j] * standPercent_;
-      hybridJointHandles_[j].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness,
-                                        robotCfg_.controlCfg.damping, 0, 2);
+      hybridJointHandles_[j].setCommand(pos_des, 0, robotCfg_.controlCfg.stiffness, robotCfg_.controlCfg.damping, 0, 2);
     }
     standPercent_ += 1 / (standDuration_ * loopFrequency_);
   } else {
@@ -163,9 +160,9 @@ bool PointfootController::loadModel() {
 
 // Loads the reinforcement learning configuration.
 bool PointfootController::loadRLCfg() {
-  auto &initState = robotCfg_.initState;
-  BipedRobotCfg::ControlCfg &controlCfg = robotCfg_.controlCfg;
-  BipedRobotCfg::RlCfg::ObsScales &obsScales = robotCfg_.rlCfg.obsScales;
+  auto& initState = robotCfg_.initState;
+  BipedRobotCfg::ControlCfg& controlCfg = robotCfg_.controlCfg;
+  BipedRobotCfg::RlCfg::ObsScales& obsScales = robotCfg_.rlCfg.obsScales;
 
   try {
     // Load parameters from ROS parameter server.
@@ -219,7 +216,7 @@ bool PointfootController::loadRLCfg() {
     scaled_commands_.setZero();
     baseLinVel_.setZero();
     basePosition_.setZero();
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     // Error handling.
     ROS_ERROR("Error in the PointfootCfg: %s", e.what());
     return false;
@@ -231,21 +228,18 @@ bool PointfootController::loadRLCfg() {
 // Computes actions using the policy model.
 void PointfootController::computeActions() {
   // Create input tensor object
-  Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator,
-                                                          OrtMemType::OrtMemTypeDefault);
+  Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
   std::vector<Ort::Value> inputValues;
   std::vector<tensor_element_t> combined_obs;
-  for (const auto &item : observations_) {
+  for (const auto& item : observations_) {
     combined_obs.push_back(item);
   }
-  inputValues.push_back(
-      Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, combined_obs.data(), combined_obs.size(),
-                                                  policyInputShapes_[0].data(), policyInputShapes_[0].size()));
+  inputValues.push_back(Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, combined_obs.data(), combined_obs.size(),
+                                                                   policyInputShapes_[0].data(), policyInputShapes_[0].size()));
   // Run inference
   Ort::RunOptions runOptions;
-  std::vector<Ort::Value> outputValues = policySessionPtr_->Run(runOptions, policyInputNames_.data(),
-                                                                inputValues.data(), 1, policyOutputNames_.data(),
-                                                                1);
+  std::vector<Ort::Value> outputValues =
+      policySessionPtr_->Run(runOptions, policyInputNames_.data(), inputValues.data(), 1, policyOutputNames_.data(), 1);
 
   for (size_t i = 0; i < actionsSize_; i++) {
     actions_[i] = *(outputValues[0].GetTensorMutableData<tensor_element_t>() + i);
@@ -258,7 +252,8 @@ void PointfootController::computeObservation() {
   for (size_t i = 0; i < 4; ++i) {
     q_wi.coeffs()(i) = imuSensorHandles_.getOrientation()[i];
   }
-  // Convert quaternion to ZYX Euler angles and calculate inverse rotation matrix
+  // Convert quaternion to ZYX Euler angles and calculate inverse rotation
+  // matrix
   vector3_t zyx = quatToZyx(q_wi);
   matrix_t inverseRot = getRotationMatrixFromZyxEulerAngles(zyx).inverse();
 
@@ -275,7 +270,7 @@ void PointfootController::computeObservation() {
   projectedGravity = rot * projectedGravity;
 
   // Get initial state of joints
-  auto &initState = robotCfg_.initState;
+  auto& initState = robotCfg_.initState;
   vector_t jointPos(initState.size());
   vector_t jointVel(initState.size());
   for (size_t i = 0; i < hybridJointHandles_.size(); ++i) {
@@ -286,19 +281,14 @@ void PointfootController::computeObservation() {
   vector_t actions(lastActions_);
 
   // Define command scaler and observation vector
-  matrix_t commandScaler = Eigen::DiagonalMatrix<scalar_t, 3>(robotCfg_.userCmdCfg.linVel_x,
-                                                              robotCfg_.userCmdCfg.linVel_y,
-                                                              robotCfg_.userCmdCfg.angVel_yaw);
+  matrix_t commandScaler =
+      Eigen::DiagonalMatrix<scalar_t, 3>(robotCfg_.userCmdCfg.linVel_x, robotCfg_.userCmdCfg.linVel_y, robotCfg_.userCmdCfg.angVel_yaw);
 
   vector_t obs(observationSize_);
   vector3_t scaled_commands = commandScaler * commands_;
   // Populate observation vector
-  obs << baseAngVel * robotCfg_.rlCfg.obsScales.angVel,
-      projectedGravity,
-      (jointPos - initJointAngles_) * robotCfg_.rlCfg.obsScales.dofPos,
-      jointVel * robotCfg_.rlCfg.obsScales.dofVel,
-      actions,
-      scaled_commands;
+  obs << baseAngVel * robotCfg_.rlCfg.obsScales.angVel, projectedGravity, (jointPos - initJointAngles_) * robotCfg_.rlCfg.obsScales.dofPos,
+      jointVel * robotCfg_.rlCfg.obsScales.dofVel, actions, scaled_commands;
 
   // Update observation, scaled commands, and proprioceptive history vector
   for (size_t i = 0; i < obs.size(); i++) {
@@ -312,12 +302,12 @@ void PointfootController::computeObservation() {
   scalar_t obsMin = -robotCfg_.rlCfg.clipObs;
   scalar_t obsMax = robotCfg_.rlCfg.clipObs;
   std::transform(observations_.begin(), observations_.end(), observations_.begin(),
-                 [obsMin, obsMax](scalar_t x)
-                 { return std::max(obsMin, std::min(obsMax, x)); });
+                 [obsMin, obsMax](scalar_t x) { return std::max(obsMin, std::min(obsMax, x)); });
 }
 
-void PointfootController::cmdVelCallback(const geometry_msgs::TwistConstPtr &msg) {
-  // Update the commands with the linear and angular velocities from the Twist message.
+void PointfootController::cmdVelCallback(const geometry_msgs::TwistConstPtr& msg) {
+  // Update the commands with the linear and angular velocities from the Twist
+  // message.
 
   // Set linear x velocity.
   commands_(0) = (msg->linear.x > 1.0 ? 1.0 : (msg->linear.x < -1.0 ? -1.0 : msg->linear.x));
@@ -329,7 +319,7 @@ void PointfootController::cmdVelCallback(const geometry_msgs::TwistConstPtr &msg
   commands_(2) = (msg->angular.z > 1.0 ? 1.0 : (msg->angular.z < -1.0 ? -1.0 : msg->angular.z));
 }
 
-} // namespace
+}  // namespace robot_controller
 
 // Export the class as a plugin.
 PLUGINLIB_EXPORT_CLASS(robot_controller::PointfootController, controller_interface::ControllerBase)

@@ -27,7 +27,7 @@ RobotHWLoop::RobotHWLoop(ros::NodeHandle &nh, ros::NodeHandle &robot_hw_nh, std:
   loopThread_ = std::thread([&]() {
     while (loopRunning_) {
       Update();
-    } 
+    }
   });
 }
 
