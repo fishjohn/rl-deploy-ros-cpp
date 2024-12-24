@@ -1,0 +1,49 @@
+<launch>
+    <!-- Pass the ROBOT_TYPE environment variable to ROS parameters -->
+    <param name="robot_type" value="$(env ROBOT_TYPE)" />
+
+    <arg name="plot" default="false"/>
+
+    <param name="use_gazebo" value="true"/>
+
+    <include file="$(find pointfoot_gazebo)/launch/empty_world.launch"/>
+    <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
+    <param name="depthImageTopicName" value="/d435F/aligned_depth_to_color/image_raw"/>
+    
+    <!-- Load ONNX model paths -->
+    <param name="policyFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/policy.onnx"/>
+    <param name="normalizerFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/normalizer.onnx"/>
+    <param name="depthBackboneFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/depth_backbone.onnx"/>
+    <param name="epEstimatorFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/ep_estimator.onnx"/>
+
+    <param name="robot_description" command="cat $(find robot_description)/pointfoot/$(env ROBOT_TYPE)/urdf/robot.urdf"/>
+    <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/params.yaml" command="load"/>
+    <rosparam file="$(find robot_hw)/config/robot_hw.yaml" command="load"/>
+    <rosparam file="$(find robot_hw)/config/joystick.yaml" command="load"/>
+
+    <node name="pointfoot_hw" pkg="robot_hw" type="pointfoot_node" respawn="false" clear_params="true" required="true"
+          output="screen" args="127.0.0.1"/>
+    
+    <group ns="pointfoot_hw">
+        <node name="controller_loader" pkg="controller_manager" type="controller_manager"
+              output="screen" args="load
+      /controllers/pointfoot_cts_vision_controller
+    "/>
+    </group>
+
+    <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering" respawn="false" />
+    <include if="$(arg plot)" file="$(find robot_visualization)/launch/pointfoot_plot_sim.launch"/>
+
+    <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="teleop_config" default="$(find robot_hw)/config/joystick_sim.yaml"/>
+
+    <node pkg="joy" type="joy_node" name="joy_node">
+      <param name="dev" value="$(arg joy_dev)"/>
+      <param name="deadzone" value="1e-3"/>
+      <param name="autorepeat_rate" value="10"/>
+      <param name="coalesce_interval" value="0.05"/>
+    </node>
+
+    <rosparam file="$(arg teleop_config)" command="load"/>
+    <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop" />
+</launch>

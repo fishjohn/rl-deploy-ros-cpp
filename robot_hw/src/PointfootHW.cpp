@@ -12,7 +12,8 @@
 
 namespace hw {
 // static const std::string CONTROLLER_NAME = "/controllers/pointfoot_controller";
-static const std::string CONTROLLER_NAME = "/controllers/pointfoot_vision_controller";
+// static const std::string CONTROLLER_NAME = "/controllers/pointfoot_vision_controller";
+static const std::string CONTROLLER_NAME = "/controllers/pointfoot_cts_vision_controller";
 
 // Method to start the biped controller
 bool PointfootHW::startBipedController() {

@@ -19,5 +19,6 @@
     <export>
         <controller_interface plugin="${prefix}/robot_controllers_plugins.xml"/>
         <controller_interface plugin="${prefix}/robot_vision_controllers_plugins.xml"/>
+        <controller_interface plugin="${prefix}/robot_cts_vision_controllers_plugins.xml"/>
     </export>
 </package>

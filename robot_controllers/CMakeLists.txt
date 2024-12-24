@@ -67,6 +67,12 @@ add_library(pointfoot_vision_controller
         src/PointfootVisionController.cpp
 )
 
+add_library(pointfoot_cts_vision_controller
+        src/ControllerBase.cpp
+        src/PointfootController.cpp
+        src/PointfootCTSVisionController.cpp
+)
+
 # Link libraries to the target
 target_link_libraries(${PROJECT_NAME}
         pointfoot_sdk_lowlevel
@@ -82,6 +88,13 @@ target_link_libraries(pointfoot_vision_controller
         onnxruntime          # Link with onnxruntime library
 )
 
+target_link_libraries(pointfoot_cts_vision_controller
+        pointfoot_sdk_lowlevel
+        ${catkin_LIBRARIES}  # Link with catkin libraries
+        ${OpenCV_LIBRARIES}  # Link with opencv libraries
+        onnxruntime          # Link with onnxruntime library
+)
+
 # Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -90,6 +103,12 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 install(TARGETS pointfoot_vision_controller
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS pointfoot_cts_vision_controller
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

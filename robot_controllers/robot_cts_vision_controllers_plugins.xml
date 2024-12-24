@@ -1,0 +1,8 @@
+<library path="lib/libpointfoot_cts_vision_controller">
+    <class name="robot_controller/PointfootCTSVisionController" type="robot_controller::PointfootCTSVisionController"
+           base_class_type="controller_interface::ControllerBase">
+        <description>
+            The pointfoot CTS vision controller.
+        </description>
+    </class>
+</library>
