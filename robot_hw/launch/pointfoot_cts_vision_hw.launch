@@ -1,0 +1,59 @@
+<launch>
+    <param name="robot_type" value="$(env ROBOT_TYPE)"/>
+    <arg name="plot" default="false"/>
+    <arg name="rviz" default="false"/>
+
+    <!-- Load ROS parameters -->
+    <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
+    <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/params.yaml" command="load"/>
+    <rosparam file="$(find robot_hw)/config/robot_hw.yaml" command="load"/>
+    <rosparam file="$(find robot_hw)/config/joystick.yaml" command="load"/>
+
+    <!-- Configure camera topic -->
+    <param name="depthImageTopicName" value="/camera/depth/image_rect_raw"/>
+
+    <!-- Add date parameter with default value -->
+    <arg name="policy_date" default="20241223"/>
+
+    <!-- Load ONNX model paths with date parameter -->
+    <param name="policyFile"
+           value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/policy.onnx"/>
+    <param name="normalizerFile"
+           value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/normalizer.onnx"/>
+    <param name="depthBackboneFile"
+           value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/depth_backbone.onnx"/>
+    <param name="epEstimatorFile"
+           value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/ep_estimator.onnx"/>
+
+    <!-- Load robot description -->
+    <param name="robot_description"
+           command="cat $(find robot_description)/pointfoot/$(env ROBOT_TYPE)/urdf/robot.urdf"/>
+
+    <!-- Start hardware interface -->
+    <node name="pointfoot_hw" pkg="robot_hw" type="pointfoot_node" respawn="false" clear_params="true" required="true"
+          output="screen" args="10.192.1.2"/>
+
+    <!-- Load controller -->
+    <group ns="pointfoot_hw">
+        <node name="controller_loader" pkg="controller_manager" type="controller_manager"
+              output="screen" args="load /controllers/pointfoot_cts_vision_controller"/>
+    </group>
+
+    <!-- Joy control configuration -->
+    <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="teleop_config" default="$(find robot_hw)/config/joystick.yaml"/>
+
+    <node pkg="joy" type="joy_node" name="joy_node">
+        <param name="dev" value="$(arg joy_dev)"/>
+        <param name="deadzone" value="1e-3"/>
+        <param name="autorepeat_rate" value="10"/>
+        <param name="coalesce_interval" value="0.05"/>
+    </node>
+
+    <rosparam file="$(arg teleop_config)" command="load"/>
+    <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop"/>
+
+    <!-- Visualization -->
+    <include if="$(arg rviz)" file="$(find robot_visualization)/launch/pointfoot_rviz_hw.launch"/>
+    <include if="$(arg plot)" file="$(find robot_visualization)/launch/pointfoot_plot_hw.launch"/>
+</launch>

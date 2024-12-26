@@ -10,11 +10,14 @@
     <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
     <param name="depthImageTopicName" value="/d435F/aligned_depth_to_color/image_raw"/>
     
-    <!-- Load ONNX model paths -->
-    <param name="policyFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/policy.onnx"/>
-    <param name="normalizerFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/normalizer.onnx"/>
-    <param name="depthBackboneFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/depth_backbone.onnx"/>
-    <param name="epEstimatorFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/ep_estimator.onnx"/>
+    <!-- Add date parameter with default value -->
+    <arg name="policy_date" default="baseline"/>
+    
+    <!-- Load ONNX model paths with date parameter -->
+    <param name="policyFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/policy.onnx"/>
+    <param name="normalizerFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/normalizer.onnx"/>
+    <param name="depthBackboneFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/depth_backbone.onnx"/>
+    <param name="epEstimatorFile" value="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/ep_estimator.onnx"/>
 
     <param name="robot_description" command="cat $(find robot_description)/pointfoot/$(env ROBOT_TYPE)/urdf/robot.urdf"/>
     <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/params.yaml" command="load"/>

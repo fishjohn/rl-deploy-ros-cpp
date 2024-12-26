@@ -478,7 +478,6 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
   std::vector<float> imageData;
   imageData.reserve(imageWidth * imageHeight);
 
-
   // Convert depth image to meters
   for (size_t i = 0; i < imageWidth * imageHeight; i++) {
     uint16_t pixelValue = (msg->data[i * 2 + 1] << 8) | msg->data[i * 2];
@@ -486,7 +485,6 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
     distance = std::min(std::max(distance, nearClip_), farClip_);
     imageData.push_back(distance);
   }
-
 
   // Resize depth image if needed
   if (msg->width != depthResizedShape_[1] || msg->height != depthResizedShape_[0]) {
