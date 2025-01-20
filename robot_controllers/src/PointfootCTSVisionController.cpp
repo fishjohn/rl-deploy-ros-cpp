@@ -86,6 +86,9 @@ void PointfootCTSVisionController::handleWalkMode() {
 }
 
 void PointfootCTSVisionController::computeActions() {
+  // Start timing
+  auto start = std::chrono::high_resolution_clock::now();
+
   Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
   std::vector<Ort::Value> inputTensors;
@@ -116,6 +119,11 @@ void PointfootCTSVisionController::computeActions() {
   scalar_t actionMax = robotCfg_.rlCfg.clipActions;
   std::transform(actions_.begin(), actions_.end(), actions_.begin(),
                  [actionMin, actionMax](scalar_t x) { return std::max(actionMin, std::min(actionMax, x)); });
+
+  // End timing and print duration in milliseconds
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  ROS_INFO_THROTTLE(1.0, "[Timing] Policy inference took %.3f ms", duration.count() / 1000.0);
 }
 
 void PointfootCTSVisionController::computeDepthBackbone() {
@@ -147,10 +155,18 @@ void PointfootCTSVisionController::computeDepthBackbone() {
     inputTensors.push_back(Ort::Value::CreateTensor<tensor_element_t>(
         memoryInfo, hiddenStates_.data(), hiddenStates_.size(), depthBackboneInputShapes_[2].data(), depthBackboneInputShapes_[2].size()));
 
+    // Start timing
+    auto start = std::chrono::high_resolution_clock::now();
+
     // Run depth backbone inference
     Ort::RunOptions runOptions;
     auto outputTensors = depthBackboneSessionPtr_->Run(runOptions, depthBackboneInputNames_.data(), inputTensors.data(), 3,
                                                        depthBackboneOutputNames_.data(), 3);
+
+    // End timing and print duration in milliseconds
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    ROS_INFO_THROTTLE(1.0, "[Timing] Depth backbone inference took %.3f ms", duration.count() / 1000.0);
 
     // Extract HM latent and predicted height map
     hmLatent_.resize(hmLatentDim_);
@@ -171,7 +187,11 @@ void PointfootCTSVisionController::computeDepthBackbone() {
     visualizeHeightMap(predictedHeightMap_);
   }
 }
+
 void PointfootCTSVisionController::computeEpEstimate() {
+  // Start timing
+  auto start = std::chrono::high_resolution_clock::now();
+
   // Prepare input tensor with observation history
   Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
@@ -191,6 +211,11 @@ void PointfootCTSVisionController::computeEpEstimate() {
   auto* outputData = outputTensors[0].GetTensorMutableData<tensor_element_t>();
   epLatent_.resize(epLatentDim_);
   std::memcpy(epLatent_.data(), outputData, epLatent_.size() * sizeof(tensor_element_t));
+
+  // End timing and print duration in milliseconds
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  ROS_INFO_THROTTLE(1.0, "[Timing] EP estimator inference took %.3f ms", duration.count() / 1000.0);
 }
 
 void PointfootCTSVisionController::computeObservation() {
@@ -490,7 +515,7 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
   if (msg->width != depthResizedShape_[1] || msg->height != depthResizedShape_[0]) {
     cv::Mat depth_mat(msg->height, msg->width, CV_32FC1, imageData.data());
     cv::Mat resized_mat;
-    cv::resize(depth_mat, resized_mat, cv::Size(depthResizedShape_[1], depthResizedShape_[0]));
+    cv::resize(depth_mat, resized_mat, cv::Size(depthResizedShape_[1], depthResizedShape_[0]),0, 0, cv::INTER_AREA);
     imageData.assign((float*)resized_mat.datastart, (float*)resized_mat.dataend);
   }
 
