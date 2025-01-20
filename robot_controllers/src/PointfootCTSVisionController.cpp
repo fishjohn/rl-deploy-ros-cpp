@@ -555,9 +555,9 @@ void PointfootCTSVisionController::visualizeHeightMap(const std::vector<tensor_e
 
   // Define grid parameters matching the configuration file
   const float resolution = 0.05f;  // Grid resolution in meters
-  const float width = 0.5f;        // Total width (x-direction) in meters
+  const float width = 1.0f;        // Total width (x-direction) in meters
   const float height = 1.0f;       // Total height (y-direction) in meters
-  const float x_offset = 0.25f;    // Offset in x-direction from base frame
+  const float x_offset = -0.5f;    // Offset in x-direction from base frame
 
   // Calculate number of points in each dimension
   const int width_points = static_cast<int>(width / resolution) + 1;    // Number of points along width

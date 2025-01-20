@@ -11,7 +11,7 @@
     <param name="depthImageTopicName" value="/d435F/aligned_depth_to_color/image_raw"/>
 
     <!-- Add date parameter with default value -->
-    <arg name="policy_date" default="20250118"/>
+    <arg name="policy_date" default="20250120"/>
 
     <!-- Load ONNX model paths with date parameter -->
     <param name="policyFile"
