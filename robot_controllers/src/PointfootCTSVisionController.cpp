@@ -38,7 +38,7 @@ void PointfootCTSVisionController::handleWalkMode() {
     computeObservation();
 
     // Write data to sub-thread buffer
-    main2SubBuffer_.writeFromNonRT(Main2SubParams(normalizedObs_));
+    main2SubBuffer_.writeFromNonRT(Main2SubParams(normalizedObs_, observationsHistoryBuffer_));
 
     // Read processed data from sub-thread
     auto subData = sub2MainBuffer_.readFromRT();
@@ -124,7 +124,7 @@ void PointfootCTSVisionController::computeDepthBackbone() {
     auto mainParams = *main2SubBuffer_.readFromNonRT();
     auto depthImage = *latestDepthImageBuffer_.readFromNonRT();
 
-    if (mainParams.normalizedObs.empty() || depthImage.empty()) {
+    if (mainParams.normalizedObs.empty() || mainParams.normalizedObsHistory.size() == 0 || depthImage.empty()) {
       ROS_INFO_THROTTLE(1.0, "[CTS Vision] Waiting for valid data");
       continue;
     }
@@ -134,10 +134,10 @@ void PointfootCTSVisionController::computeDepthBackbone() {
 
     std::vector<Ort::Value> inputTensors;
 
-    // Add proprioceptive observations
-    inputTensors.push_back(Ort::Value::CreateTensor<tensor_element_t>(memoryInfo, mainParams.normalizedObs.data(),
-                                                                      mainParams.normalizedObs.size(), depthBackboneInputShapes_[0].data(),
-                                                                      depthBackboneInputShapes_[0].size()));
+    // Add proprioceptive observations history
+    inputTensors.push_back(Ort::Value::CreateTensor<tensor_element_t>(
+        memoryInfo, mainParams.normalizedObsHistory.data(), mainParams.normalizedObsHistory.size(), depthBackboneInputShapes_[0].data(),
+        depthBackboneInputShapes_[0].size()));
 
     // Add depth image
     inputTensors.push_back(Ort::Value::CreateTensor<tensor_element_t>(
@@ -168,7 +168,7 @@ void PointfootCTSVisionController::computeDepthBackbone() {
     sub2MainBuffer_.writeFromNonRT(Sub2MainParams(hmLatent_, predictedHeightMap_));
 
     // Visualize height map if needed
-    // visualizeHeightMap(predictedHeightMap_);
+    visualizeHeightMap(predictedHeightMap_);
   }
 }
 void PointfootCTSVisionController::computeEpEstimate() {
@@ -510,6 +510,7 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
 }
 
 void PointfootCTSVisionController::visualizeHeightMap(const std::vector<tensor_element_t>& heightMap) {
+  // Initialize marker message
   visualization_msgs::Marker points;
   points.header.frame_id = "base_link";
   points.header.stamp = ros::Time::now();
@@ -519,26 +520,49 @@ void PointfootCTSVisionController::visualizeHeightMap(const std::vector<tensor_e
   points.id = 0;
   points.type = visualization_msgs::Marker::POINTS;
 
-  // Set the scale of the marker
-  points.scale.x = 0.02;
-  points.scale.y = 0.02;
+  // Set the scale of the marker points
+  points.scale.x = 0.02;  // Point width
+  points.scale.y = 0.02;  // Point height
 
-  // Set the color
+  // Set the color (green with full opacity)
   points.color.g = 1.0f;
   points.color.a = 1.0;
 
+  // Define grid parameters matching the configuration file
+  const float resolution = 0.05f;  // Grid resolution in meters
+  const float width = 0.5f;        // Total width (x-direction) in meters
+  const float height = 1.0f;       // Total height (y-direction) in meters
+  const float x_offset = 0.25f;    // Offset in x-direction from base frame
+
+  // Calculate number of points in each dimension
+  const int width_points = static_cast<int>(width / resolution) + 1;    // Number of points along width
+  const int height_points = static_cast<int>(height / resolution) + 1;  // Number of points along height
+
+  // Verify heightMap size matches expected dimensions
+  if (heightMap.size() != width_points * height_points) {
+    ROS_ERROR_STREAM("Height map size mismatch. Expected: " << width_points * height_points << ", Got: " << heightMap.size());
+    return;
+  }
+
   // Create points from height map
-  const int height_map_size = 16;  // Assuming 16x16 height map
-  for (int i = 0; i < height_map_size; ++i) {
-    for (int j = 0; j < height_map_size; ++j) {
+  for (int i = 0; i < height_points; ++i) {
+    for (int j = 0; j < width_points; ++j) {
       geometry_msgs::Point p;
-      p.x = (i - height_map_size / 2) * 0.1;  // 10cm spacing
-      p.y = (j - height_map_size / 2) * 0.1;
-      p.z = heightMap[i * height_map_size + j];
+
+      // Calculate point coordinates:
+      // x: starts from x_offset and extends by width
+      // y: centered around 0, extends from -height/2 to height/2
+      // z: taken from height map
+      p.x = x_offset + j * resolution;
+      p.y = (i * resolution) - (height / 2.0f);
+      p.z = -heightMap[i * width_points + j] - 0.5;
+
+      // Add point to marker
       points.points.push_back(p);
     }
   }
 
+  // Publish the marker
   heightMapPub_.publish(points);
 }
 

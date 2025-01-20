@@ -52,7 +52,7 @@ class PointfootCTSVisionController : public PointfootController {
 
   // ONNX runtime environment and sessions
   std::shared_ptr<Ort::Env> onnxEnvPtr_;
-  
+
   // Policy model
   std::unique_ptr<Ort::Session> policySessionPtr_;
   std::vector<const char*> policyInputNames_;
@@ -131,9 +131,11 @@ class PointfootCTSVisionController : public PointfootController {
   // Real-time communication structures
   struct Main2SubParams {
     std::vector<tensor_element_t> normalizedObs;
+    Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1> normalizedObsHistory;
 
     Main2SubParams() = default;
-    Main2SubParams(const std::vector<tensor_element_t>& obs) : normalizedObs(obs) {}
+    Main2SubParams(const std::vector<tensor_element_t>& obs, const Eigen::Matrix<tensor_element_t, Eigen::Dynamic, 1>& obsHistory)
+        : normalizedObs(obs), normalizedObsHistory(obsHistory) {}
   };
 
   struct Sub2MainParams {
@@ -151,5 +153,5 @@ class PointfootCTSVisionController : public PointfootController {
   realtime_tools::RealtimeBuffer<std::vector<tensor_element_t>> latestDepthImageBuffer_;
 };
 
-} // namespace robot_controller
-#endif // _LIMX_POINTFOOT_CTS_VISION_CONTROLLER_H_
+}  // namespace robot_controller
+#endif  // _LIMX_POINTFOOT_CTS_VISION_CONTROLLER_H_

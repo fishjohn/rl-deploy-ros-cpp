@@ -3,17 +3,17 @@
     <arg name="plot" default="false"/>
     <arg name="rviz" default="false"/>
 
+    <!-- Add date parameter with default value -->
+    <arg name="policy_date" default="20250118"/>
+
     <!-- Load ROS parameters -->
     <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
-    <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/params.yaml" command="load"/>
+    <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/params.yaml" command="load"/>
     <rosparam file="$(find robot_hw)/config/robot_hw.yaml" command="load"/>
     <rosparam file="$(find robot_hw)/config/joystick.yaml" command="load"/>
 
     <!-- Configure camera topic -->
     <param name="depthImageTopicName" value="/camera/depth/image_rect_raw"/>
-
-    <!-- Add date parameter with default value -->
-    <arg name="policy_date" default="20241223"/>
 
     <!-- Load ONNX model paths with date parameter -->
     <param name="policyFile"
@@ -28,6 +28,8 @@
     <!-- Load robot description -->
     <param name="robot_description"
            command="cat $(find robot_description)/pointfoot/$(env ROBOT_TYPE)/urdf/robot.urdf"/>
+    <rosparam file="$(find robot_controllers)/config/pointfoot_cts_vision/policy/$(arg policy_date)/params.yaml"
+              command="load"/>
 
     <!-- Start hardware interface -->
     <node name="pointfoot_hw" pkg="robot_hw" type="pointfoot_node" respawn="false" clear_params="true" required="true"
