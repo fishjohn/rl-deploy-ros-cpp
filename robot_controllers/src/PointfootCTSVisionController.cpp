@@ -536,7 +536,7 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
   std::memcpy(cropimageData.data(), cropped_mat.data, crop_size * sizeof(float));
 
   // Update depth image buffer
-  latestDepthImageBuffer_.writeFromNonRT(imageData);
+  latestDepthImageBuffer_.writeFromNonRT(cropimageData);
 
   // Publish resized depth image for visualization
   sensor_msgs::Image resized_msg;
