@@ -497,27 +497,43 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
     return;
   }
 
-  // Convert depth image to vector of floats
+  // Covert origin depth image to vector of floats
   uint32_t imageWidth = msg->width;
   uint32_t imageHeight = msg->height;
-  std::vector<float> imageData;
-  imageData.reserve(imageWidth * imageHeight);
+  std::vector<float> originalData;
+  originalData.reserve(msg->width * msg->height);
 
   // Convert depth image to meters
   for (size_t i = 0; i < imageWidth * imageHeight; i++) {
     uint16_t pixelValue = (msg->data[i * 2 + 1] << 8) | msg->data[i * 2];
     float distance = static_cast<float>(pixelValue) / 1000.0f;
     distance = std::min(std::max(distance, nearClip_), farClip_);
-    imageData.push_back(distance);
+    originalData.push_back(distance);
   }
+
+  // Create a vector for resize image
+  std::vector<float> imageData;
+  imageData.reserve(depthResizedShape_[0] * depthResizedShape_[1]);
 
   // Resize depth image if needed
   if (msg->width != depthResizedShape_[1] || msg->height != depthResizedShape_[0]) {
-    cv::Mat depth_mat(msg->height, msg->width, CV_32FC1, imageData.data());
+    cv::Mat depth_mat(msg->height, msg->width, CV_32FC1, originalData.data());
     cv::Mat resized_mat;
-    cv::resize(depth_mat, resized_mat, cv::Size(depthResizedShape_[1], depthResizedShape_[0]),0, 0, cv::INTER_AREA);
+    cv::resize(depth_mat, resized_mat, cv::Size(depthResizedShape_[1], depthResizedShape_[0]), 0, 0, cv::INTER_AREA);
     imageData.assign((float*)resized_mat.datastart, (float*)resized_mat.dataend);
+  } else {
+    imageData = originalData;
   }
+
+  // Crop 20 pixels from the width dimension
+  std::vector<float> cropimageData;
+  const size_t crop_size = depthResizedShape_[0] * (depthResizedShape_[1] - 20);
+  cropimageData.resize(crop_size);
+
+  cv::Mat depth_mat(depthResizedShape_[0], depthResizedShape_[1], CV_32FC1, imageData.data());
+  cv::Mat cropped_mat = depth_mat(cv::Range::all(), cv::Range(20, depthResizedShape_[1])).clone();
+
+  std::memcpy(cropimageData.data(), cropped_mat.data, crop_size * sizeof(float));
 
   // Update depth image buffer
   latestDepthImageBuffer_.writeFromNonRT(imageData);
@@ -527,10 +543,15 @@ void PointfootCTSVisionController::depthImageCallback(const sensor_msgs::Image::
   resized_msg.header = msg->header;
   resized_msg.encoding = "32FC1";
   resized_msg.height = depthResizedShape_[0];
-  resized_msg.width = depthResizedShape_[1];
-  resized_msg.step = depthResizedShape_[1] * sizeof(float);
-  resized_msg.data.assign(reinterpret_cast<const uint8_t*>(imageData.data()),
-                          reinterpret_cast<const uint8_t*>(imageData.data() + imageData.size()));
+  resized_msg.width = depthResizedShape_[1] - 20;
+  resized_msg.is_bigendian = false;
+  resized_msg.step = resized_msg.width * sizeof(float);
+
+  const size_t data_size = resized_msg.height * resized_msg.width * sizeof(float);
+  resized_msg.data.resize(data_size);
+
+  std::memcpy(resized_msg.data.data(), cropimageData.data(), data_size);
+
   resizedDepthImagePub_.publish(resized_msg);
 }
 
