@@ -13,14 +13,14 @@ SolefootCTSCfg:
     # target angles [rad] when action = 0.0
     default_joint_angle:
       abad_L_Joint: 0.0
-      hip_L_Joint: 0.0
-      knee_L_Joint: 0.0
-      ankle_L_Joint: 0.0
+      hip_L_Joint: -0.33
+      knee_L_Joint: -0.6
+      ankle_L_Joint: 0.27
 
       abad_R_Joint: 0.0
-      hip_R_Joint: 0.0
-      knee_R_Joint: 0.0
-      ankle_R_Joint: 0.0
+      hip_R_Joint: 0.33
+      knee_R_Joint: 0.6
+      ankle_R_Joint: 0.27
 
   control:
     # PD Drive parameters:
@@ -30,7 +30,7 @@ SolefootCTSCfg:
     ankle_joint_damping: 0.5
     action_scale_pos: 0.25
     decimation: 10
-    user_torque_limit: 80
+    user_torque_limit: 80000
 
   normalization:
     clip_scales:
@@ -42,7 +42,7 @@ SolefootCTSCfg:
     observations_size: 33  # 3+3+8+8+8+3=33
     commands_size: 3
     obs_history_length: 5
-    latent_dim: 128
+    latent_dim: 64
 
   stand_mode:
     stand_duration: 1.0
@@ -53,6 +53,6 @@ SolefootCTSCfg:
     yaw: 0.0
 
   user_cmd_scales:
-    lin_vel_x: 2.0
+    lin_vel_x: 1.0
     lin_vel_y: 1.0
-    ang_vel_yaw: 2.0 
+    ang_vel_yaw: 1.0 
