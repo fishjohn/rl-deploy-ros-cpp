@@ -5,3 +5,5 @@ controllers:
     type: robot_controller/PointfootVisionController
   pointfoot_cts_vision_controller:
     type: robot_controller/PointfootCTSVisionController
+  solefoot_cts_controller:
+    type: robot_controller/SolefootCTSController

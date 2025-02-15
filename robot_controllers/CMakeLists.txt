@@ -73,6 +73,12 @@ add_library(pointfoot_cts_vision_controller
         src/PointfootCTSVisionController.cpp
 )
 
+add_library(solefoot_cts_controller
+        src/ControllerBase.cpp
+        src/PointfootController.cpp
+        src/SolefootCTSController.cpp
+)
+
 # Link libraries to the target
 target_link_libraries(${PROJECT_NAME}
         pointfoot_sdk_lowlevel
@@ -95,6 +101,12 @@ target_link_libraries(pointfoot_cts_vision_controller
         onnxruntime          # Link with onnxruntime library
 )
 
+target_link_libraries(solefoot_cts_controller
+        pointfoot_sdk_lowlevel
+        ${catkin_LIBRARIES}  # Link with catkin libraries
+        ${OpenCV_LIBRARIES}  # Link with opencv libraries
+        onnxruntime          # Link with onnxruntime library
+)
 # Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -114,6 +126,12 @@ install(TARGETS pointfoot_cts_vision_controller
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(TARGETS solefoot_cts_controller
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 # Mark cpp header files for installation
 install(DIRECTORY include/. DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
@@ -124,3 +142,4 @@ install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_cts_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(FILES solefoot_cts_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

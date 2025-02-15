@@ -1,0 +1,7 @@
+<library path="lib/libsolefoot_cts_controller">
+    <class name="robot_controller/SolefootCTSController" type="robot_controller::SolefootCTSController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            The solefoot CTS controller.
+        </description>
+    </class>
+</library>
