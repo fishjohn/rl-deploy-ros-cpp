@@ -22,7 +22,7 @@
 namespace hw {
 
 class RobotHW : public hardware_interface::RobotHW {
-public:
+ public:
   RobotHW() = default;
 
   /**
@@ -34,7 +34,7 @@ public:
    * @param robot_hw_nh Node-handle for robot hardware.
    * @return True if initialization is successful, false otherwise.
    */
-  bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
+  bool init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) override;
 
   /**
    * \brief Retrieves the URDF model of the robot.
@@ -55,15 +55,15 @@ public:
    */
   virtual bool loadUrdf(ros::NodeHandle& nh) { return false; }
 
-protected:
+ protected:
   // Interface
-  hardware_interface::JointStateInterface jointStateInterface_;    // Interface for joint state data. 
-  hardware_interface::ImuSensorInterface imuSensorInterface_;      // Interface for IMU sensor data. 
-  robot_common::HybridJointInterface hybridJointInterface_;         // Interface for hybrid joint data.
-  robot_common::ContactSensorInterface contactSensorInterface_;    // Interface for contact sensor data.
-  std::shared_ptr<urdf::Model> urdfModel_;                        // Shared pointer to URDF model.
+  hardware_interface::JointStateInterface jointStateInterface_;  // Interface for joint state data.
+  hardware_interface::ImuSensorInterface imuSensorInterface_;    // Interface for IMU sensor data.
+  robot_common::HybridJointInterface hybridJointInterface_;      // Interface for hybrid joint data.
+  robot_common::ContactSensorInterface contactSensorInterface_;  // Interface for contact sensor data.
+  std::shared_ptr<urdf::Model> urdfModel_;                       // Shared pointer to URDF model.
 };
 
 }  // namespace hw
 
-#endif // _LIMX_ROBOT_HW_H_
+#endif  // _LIMX_ROBOT_HW_H_

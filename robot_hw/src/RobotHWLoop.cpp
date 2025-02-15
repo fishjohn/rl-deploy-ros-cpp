@@ -2,12 +2,12 @@
 //
 // © [2024] LimX Dynamics Technology Co., Ltd. All rights reserved.
 
-#include <ros/ros.h>
 #include "robot_hw/RobotHWLoop.h"
+#include <ros/ros.h>
 
 namespace hw {
 // Constructor for the RobotHWLoop class
-RobotHWLoop::RobotHWLoop(ros::NodeHandle &nh, ros::NodeHandle &robot_hw_nh, std::shared_ptr<RobotHW> hardware_interface)
+RobotHWLoop::RobotHWLoop(ros::NodeHandle& nh, ros::NodeHandle& robot_hw_nh, std::shared_ptr<RobotHW> hardware_interface)
     : hardwareInterface_(std::move(hardware_interface)), loopRunning_(true) {
   controllerManager_.reset(new controller_manager::ControllerManager(hardwareInterface_.get(), robot_hw_nh));
 
@@ -17,8 +17,7 @@ RobotHWLoop::RobotHWLoop(ros::NodeHandle &nh, ros::NodeHandle &robot_hw_nh, std:
   loopHz_ = nh.param<double>("/robot_hw/loop_frequency", 500);
   cycleTimeErrorThreshold_ = nh.param<double>("/robot_hw/cycle_time_error_threshold", 0.002);
 
-  ROS_INFO("Load param:\nloop_frequency: %f, \ncycleTimeErrorThreshold: %f",
-            loopHz_, cycleTimeErrorThreshold_);
+  ROS_INFO("Load param:\nloop_frequency: %f, \ncycleTimeErrorThreshold: %f", loopHz_, cycleTimeErrorThreshold_);
 
   // Get current time for use with first update
   lastTime_ = Clock::now();
@@ -44,10 +43,9 @@ void RobotHWLoop::Update() {
 
   // Check cycle time for excess delay
   const double cycle_time_error = (elapsedTime_ - ros::Duration(desiredDuration.count())).toSec();
-  if (cycle_time_error > cycleTimeErrorThreshold_)
-  {
-    ROS_WARN("Cycle time exceeded error threshold by: %fs, cycle time: %fs, threshold: %fs",
-              cycle_time_error - cycleTimeErrorThreshold_, elapsedTime_.toSec(), cycleTimeErrorThreshold_);
+  if (cycle_time_error > cycleTimeErrorThreshold_) {
+    ROS_WARN("Cycle time exceeded error threshold by: %fs, cycle time: %fs, threshold: %fs", cycle_time_error - cycleTimeErrorThreshold_,
+             elapsedTime_.toSec(), cycleTimeErrorThreshold_);
   }
 
   // Input
@@ -74,4 +72,4 @@ RobotHWLoop::~RobotHWLoop() {
     loopThread_.join();
   }
 }
-} // namespace hw
+}  // namespace hw

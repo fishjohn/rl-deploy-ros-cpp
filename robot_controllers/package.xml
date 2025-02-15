@@ -13,6 +13,7 @@
     <depend>pointfoot_sdk_lowlevel</depend>
     <depend>robot_common</depend>
     <depend>robot_description</depend>
+    <depend>hardware_interface</depend>
     <build_depend>pluginlib</build_depend>
     <build_export_depend>pluginlib</build_export_depend>
     <exec_depend>controller_manager</exec_depend>

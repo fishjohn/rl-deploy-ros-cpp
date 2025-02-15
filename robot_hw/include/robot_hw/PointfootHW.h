@@ -5,21 +5,21 @@
 #ifndef _LIMX_POINTFOOT_HW_H_
 #define _LIMX_POINTFOOT_HW_H_
 
-#include <robot_hw/RobotHW.h>
 #include <robot_hw/RobotData.h>
-#include "controller_manager_msgs/SwitchController.h"
+#include <robot_hw/RobotHW.h>
 #include "controller_manager_msgs/ListControllers.h"
-#include "realtime_tools/realtime_buffer.h"
+#include "controller_manager_msgs/SwitchController.h"
 #include "geometry_msgs/Twist.h"
-#include "sensor_msgs/Joy.h"
 #include "limxsdk/pointfoot.h"
+#include "realtime_tools/realtime_buffer.h"
+#include "sensor_msgs/Joy.h"
 
 namespace hw {
 
 const std::vector<std::string> CONTACT_SENSOR_NAMES = {"L_FOOT", "R_FOOT"};
 
 class PointfootHW : public hw::RobotHW {
-public:
+ public:
   PointfootHW() = default;
 
   /**
@@ -29,7 +29,7 @@ public:
    * @param robot_hw_nh Node-handle for robot hardware.
    * @return True when initialization is successful, False when failed.
    */
-  bool init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_hw_nh) override;
+  bool init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) override;
 
   /**
    * \brief Communicate with hardware to get data and status of the robot.
@@ -37,7 +37,7 @@ public:
    * @param time Current time
    * @param period Current time - last time
    */
-  void read(const ros::Time &time, const ros::Duration &period) override;
+  void read(const ros::Time& time, const ros::Duration& period) override;
 
   /**
    * \brief Communicate with hardware to publish commands to the robot.
@@ -45,29 +45,29 @@ public:
    * @param time Current time
    * @param period Current time - last time
    */
-  void write(const ros::Time &time, const ros::Duration &period) override;
+  void write(const ros::Time& time, const ros::Duration& period) override;
 
-  bool loadUrdf(ros::NodeHandle &nh) override;
+  bool loadUrdf(ros::NodeHandle& nh) override;
 
   bool startBipedController();
 
   bool stopBipedController();
 
-private:
+ private:
   bool setupJoints();
 
   bool setupImu();
 
-  bool setupContactSensor(ros::NodeHandle &nh);
+  bool setupContactSensor(ros::NodeHandle& nh);
 
-  MotorData jointData_[6]{}; // NOLINT(modernize-avoid-c-arrays)
+  std::vector<MotorData> jointData_;  // Vector to store motor data for each joint.
   ImuData imuData_{};
 
   realtime_tools::RealtimeBuffer<limxsdk::RobotState> robotstate_buffer_;
   realtime_tools::RealtimeBuffer<limxsdk::ImuData> imudata_buffer_;
   limxsdk::RobotCmd robotCmd_;
 
-  bool contactState_[2]{}; // NOLINT(modernize-avoid-c-arrays)
+  bool contactState_[2]{};  // NOLINT(modernize-avoid-c-arrays)
   int contactThreshold_{40};
 
   int calibration_state_{-1};
@@ -77,9 +77,9 @@ private:
   ros::ServiceClient switch_controllers_client_;
   ros::ServiceClient list_controllers_client_;
 
-  limxsdk::PointFoot *robot_;
+  limxsdk::PointFoot* robot_;
 };
 
-} // namespace hw
+}  // namespace hw
 
-#endif //_LIMX_POINTFOOT_HW_H_
+#endif  //_LIMX_POINTFOOT_HW_H_

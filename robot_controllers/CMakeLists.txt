@@ -123,3 +123,4 @@ install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 # Mark other files for installation
 install(FILES robot_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(FILES robot_cts_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

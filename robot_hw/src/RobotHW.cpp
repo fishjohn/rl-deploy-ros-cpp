@@ -6,7 +6,7 @@
 
 namespace hw {
 // Initialize the RobotHW
-bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle & /*robot_hw_nh*/) {
+bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& /*robot_hw_nh*/) {
   // Load URDF for the robot
   if (!loadUrdf(root_nh)) {
     ROS_ERROR("Error occurred while setting up URDF");
@@ -22,4 +22,3 @@ bool RobotHW::init(ros::NodeHandle& root_nh, ros::NodeHandle & /*robot_hw_nh*/) 
   return true;
 }
 }  // namespace hw
-

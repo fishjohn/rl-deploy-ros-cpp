@@ -162,7 +162,7 @@ class ControllerBase
 
  protected:
   // Callback function for velocity commands
-  virtual void cmdVelCallback(const geometry_msgs::TwistConstPtr& msg){};
+  virtual void cmdVelCallback(const geometry_msgs::TwistConstPtr& msg) {};
 
   // Get the robot configuration
   virtual RobotCfg& getRobotCfg() { return robotCfg_; }
@@ -190,6 +190,11 @@ class ControllerBase
 
   ros::NodeHandle nh_;         // ROS node handle
   ros::Subscriber cmdVelSub_;  // Command velocity subscriber
+
+  std::string robot_type_;     // Type of the robot (e.g., point foot, wheel foot, sole foot)
+  bool is_point_foot_{false};  // Indicates if the robot has a point foot configuration
+  bool is_wheel_foot_{false};  // Indicates if the robot has a wheel foot configuration
+  bool is_sole_foot_{false};   // Indicates if the robot has a sole foot configuration
 };
 
 // Function to compute square of a value

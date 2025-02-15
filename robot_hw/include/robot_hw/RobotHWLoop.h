@@ -5,10 +5,10 @@
 #ifndef _LIMX_ROBOT_HW_LOOP_H_
 #define _LIMX_ROBOT_HW_LOOP_H_
 
-#include "robot_hw/RobotHW.h"
+#include <controller_manager/controller_manager.h>
 #include <chrono>
 #include <thread>
-#include <controller_manager/controller_manager.h>
+#include "robot_hw/RobotHW.h"
 
 namespace hw {
 
@@ -47,4 +47,4 @@ class RobotHWLoop {  // NOLINT(cppcoreguidelines-special-member-functions)
 
 }  // namespace hw
 
-#endif // _LIMX_ROBOT_HW_LOOP_H_
+#endif  // _LIMX_ROBOT_HW_LOOP_H_

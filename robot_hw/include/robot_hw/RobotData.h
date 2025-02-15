@@ -20,7 +20,7 @@ struct MotorData {
   }
   // State variables
   double pos_, vel_, tau_;
-  
+
   // Command variables
   double posDes_, velDes_, kp_, kd_, tau_ff_;
   uint8_t mode_;
@@ -55,18 +55,18 @@ struct ImuData {
   }
 
   // Orientation
-  double ori_[4];            // NOLINT(modernize-avoid-c-arrays)
-  double oriCov_[9];         // NOLINT(modernize-avoid-c-arrays)
-  
+  double ori_[4];     // NOLINT(modernize-avoid-c-arrays)
+  double oriCov_[9];  // NOLINT(modernize-avoid-c-arrays)
+
   // Angular velocity
   double angularVel_[3];     // NOLINT(modernize-avoid-c-arrays)
   double angularVelCov_[9];  // NOLINT(modernize-avoid-c-arrays)
-  
+
   // Linear acceleration
-  double linearAcc_[3];      // NOLINT(modernize-avoid-c-arrays)
-  double linearAccCov_[9];   // NOLINT(modernize-avoid-c-arrays)
+  double linearAcc_[3];     // NOLINT(modernize-avoid-c-arrays)
+  double linearAccCov_[9];  // NOLINT(modernize-avoid-c-arrays)
 };
 
-} // namespace hw
+}  // namespace hw
 
-#endif // _LIMX_ROBOT_DATA_H_
+#endif  // _LIMX_ROBOT_DATA_H_

@@ -12,15 +12,14 @@
 
 namespace hw {
 // static const std::string CONTROLLER_NAME = "/controllers/pointfoot_controller";
-// static const std::string CONTROLLER_NAME = "/controllers/pointfoot_vision_controller";
 static const std::string CONTROLLER_NAME = "/controllers/pointfoot_cts_vision_controller";
 
 // Method to start the biped controller
 bool PointfootHW::startBipedController() {
   controller_manager_msgs::ListControllers list_controllers;
   if (!list_controllers_client_.call(list_controllers)) {
-      ROS_ERROR("Failed to call list controllers service.");
-      return false;
+    ROS_ERROR("Failed to call list controllers service.");
+    return false;
   }
 
   for (const auto& controller : list_controllers.response.controller) {
@@ -64,14 +63,25 @@ bool PointfootHW::stopBipedController() {
   if (switch_controllers_client_.call(sw.request, sw.response)) {
     if (sw.response.ok) {
       ROS_INFO("Stop controller %s successfully.", sw.request.stop_controllers[0].c_str());
-      return true;
     } else {
       ROS_WARN("Stop controller %s failed.", sw.request.stop_controllers[0].c_str());
     }
   } else {
     ROS_WARN("Failed to stop controller %s.", sw.request.stop_controllers[0].c_str());
   }
-  return false;
+
+  for (int i = 0; i < robot_->getMotorNumber(); ++i) {
+    robotCmd_.q[i] = jointData_[i].posDes_ = 0.0;
+    robotCmd_.dq[i] = jointData_[i].velDes_ = 0.0;
+    robotCmd_.Kp[i] = jointData_[i].kp_ = 0.0;
+    robotCmd_.tau[i] = jointData_[i].tau_ff_ = 0.0;
+    robotCmd_.Kd[i] = jointData_[i].kd_ = 1.0;
+  }
+  robot_->publishRobotCmd(robotCmd_);
+
+  std::this_thread::sleep_for(std::chrono::nanoseconds(static_cast<int64_t>(1.0 * 1e9)));
+
+  return true;
 }
 
 // Method to initialize the hardware interface
@@ -84,29 +94,28 @@ bool PointfootHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
     return false;
   }
 
+  // Resize the jointData_ vector to match the number of motors in the robot
+  jointData_.resize(robot_->getMotorNumber());
+
   // Initializing robot command instance, state buffer and imu buffer
   robotCmd_ = limxsdk::RobotCmd(robot_->getMotorNumber());
   robotstate_buffer_.writeFromNonRT(limxsdk::RobotState(robot_->getMotorNumber()));
   imudata_buffer_.writeFromNonRT(limxsdk::ImuData());
 
   // Subscribing to robot state
-  robot_->subscribeRobotState([this](const limxsdk::RobotStateConstPtr& msg) {
-    robotstate_buffer_.writeFromNonRT(*msg);
-  });
+  robot_->subscribeRobotState([this](const limxsdk::RobotStateConstPtr& msg) { robotstate_buffer_.writeFromNonRT(*msg); });
 
   // Subscribing to robot imu
-  robot_->subscribeImuData([this](const limxsdk::ImuDataConstPtr& msg) {
-    imudata_buffer_.writeFromNonRT(*msg);
-  });
+  robot_->subscribeImuData([this](const limxsdk::ImuDataConstPtr& msg) { imudata_buffer_.writeFromNonRT(*msg); });
 
   // Retrieving joystick configuration parameters
   root_nh.getParam("/joystick_buttons", joystick_btn_map_);
-  for (auto button: joystick_btn_map_) {
+  for (auto button : joystick_btn_map_) {
     ROS_INFO_STREAM("Joystick button: [" << button.first << ", " << button.second << "]");
   }
 
   root_nh.getParam("/joystick_axes", joystick_axes_map_);
-  for (auto axes: joystick_axes_map_) {
+  for (auto axes : joystick_axes_map_) {
     ROS_INFO_STREAM("Joystick axes: [" << axes.first << ", " << axes.second << "]");
   }
 
@@ -124,13 +133,14 @@ bool PointfootHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
     if (joystick_btn_map_.count("L1") > 0 && joystick_btn_map_.count("X") > 0) {
       if (msg->buttons[joystick_btn_map_["L1"]] == 1 && msg->buttons[joystick_btn_map_["X"]] == 1) {
         ROS_FATAL("L1 + X stopping controller!");
+        stopBipedController();
         abort();
       }
     }
 
     // Publishing cmd_vel based on joystick input
-    if (joystick_axes_map_.count("left_horizon") > 0 && joystick_axes_map_.count("left_vertical") > 0
-      && joystick_axes_map_.count("right_horizon") > 0 && joystick_axes_map_.count("right_vertical") > 0) {
+    if (joystick_axes_map_.count("left_horizon") > 0 && joystick_axes_map_.count("left_vertical") > 0 &&
+        joystick_axes_map_.count("right_horizon") > 0 && joystick_axes_map_.count("right_vertical") > 0) {
       static ros::Time lastpub;
       ros::Time now = ros::Time::now();
       if (fabs(now.toSec() - lastpub.toSec()) >= (1.0 / 30)) {
@@ -153,16 +163,18 @@ bool PointfootHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
       ROS_WARN("Calibration state: %d, msg: %s", msg->code, msg->message.c_str());
       calibration_state_ = msg->code;
     }
-    
+
     // Check if the diagnostic message pertains to EtherCAT
     if (msg->name == "ethercat" && msg->level == limxsdk::DiagnosticValue::ERROR) {
       ROS_FATAL("Ethercat code: %d, msg: %s", msg->code, msg->message.c_str());
+      stopBipedController();
       abort();
     }
 
     // Check if the diagnostic message pertains to IMU
     if (msg->name == "imu" && msg->level == limxsdk::DiagnosticValue::ERROR) {
       ROS_FATAL("IMU code: %d, msg: %s", msg->code, msg->message.c_str());
+      stopBipedController();
       abort();
     }
   });
@@ -171,8 +183,10 @@ bool PointfootHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   cmd_vel_pub_ = root_nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
 
   // Initializing ROS service clients for controller
-  switch_controllers_client_ = robot_hw_nh.serviceClient<controller_manager_msgs::SwitchController>("/pointfoot_hw/controller_manager/switch_controller");
-  list_controllers_client_ = robot_hw_nh.serviceClient<controller_manager_msgs::ListControllers>("/pointfoot_hw/controller_manager/list_controllers");
+  switch_controllers_client_ =
+      robot_hw_nh.serviceClient<controller_manager_msgs::SwitchController>("/pointfoot_hw/controller_manager/switch_controller");
+  list_controllers_client_ =
+      robot_hw_nh.serviceClient<controller_manager_msgs::ListControllers>("/pointfoot_hw/controller_manager/list_controllers");
 
   // Setting up joints, IMU, and contact sensors
   setupJoints();
@@ -241,17 +255,20 @@ bool PointfootHW::setupJoints() {
       joint_index = 1;
     else if (joint.first.find("knee") != std::string::npos)
       joint_index = 2;
+    else if (joint.first.find("wheel") != std::string::npos)
+      joint_index = 3;
+    else if (joint.first.find("ankle") != std::string::npos)
+      joint_index = 3;
     else
       continue;
 
-    int index = leg_index * 3 + joint_index;
+    int index = leg_index * robot_->getMotorNumber() / 2 + joint_index;
     hardware_interface::JointStateHandle state_handle(joint.first, &jointData_[index].pos_, &jointData_[index].vel_,
                                                       &jointData_[index].tau_);
     jointStateInterface_.registerHandle(state_handle);
-    hybridJointInterface_.registerHandle(robot_common::HybridJointHandle(state_handle, &jointData_[index].posDes_,
-                                                                         &jointData_[index].velDes_,
-                                                                         &jointData_[index].kp_, &jointData_[index].kd_,
-                                                                         &jointData_[index].tau_ff_, &jointData_[index].mode_));
+    hybridJointInterface_.registerHandle(
+        robot_common::HybridJointHandle(state_handle, &jointData_[index].posDes_, &jointData_[index].velDes_, &jointData_[index].kp_,
+                                        &jointData_[index].kd_, &jointData_[index].tau_ff_, &jointData_[index].mode_));
   }
 
   return true;
@@ -259,10 +276,9 @@ bool PointfootHW::setupJoints() {
 
 // Method to setup IMU sensor
 bool PointfootHW::setupImu() {
-  imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle("limx_imu", "limx_imu", imuData_.ori_,
-                                                                           imuData_.oriCov_, imuData_.angularVel_,
-                                                                           imuData_.angularVelCov_, imuData_.linearAcc_,
-                                                                           imuData_.linearAccCov_));
+  imuSensorInterface_.registerHandle(hardware_interface::ImuSensorHandle("limx_imu", "limx_imu", imuData_.ori_, imuData_.oriCov_,
+                                                                         imuData_.angularVel_, imuData_.angularVelCov_, imuData_.linearAcc_,
+                                                                         imuData_.linearAccCov_));
   return true;
 }
 
