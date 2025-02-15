@@ -143,3 +143,7 @@ install(FILES robot_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_D
 install(FILES robot_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_cts_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES solefoot_cts_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+# debug setting
+# set(CMAKE_BUILD_TYPE Debug)
+# add_compile_options(-g)

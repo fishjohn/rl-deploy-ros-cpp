@@ -30,7 +30,7 @@ SolefootCTSCfg:
     ankle_joint_damping: 0.5
     action_scale_pos: 0.25
     decimation: 10
-    user_torque_limit: 80
+    user_torque_limit: 80000
 
   normalization:
     clip_scales:

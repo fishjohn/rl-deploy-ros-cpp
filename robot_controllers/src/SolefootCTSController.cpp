@@ -55,8 +55,8 @@ void SolefootCTSController::handleWalkMode() {
       scalar_t actionMin = (jointVel(i) - robotCfg_.controlCfg.user_torque_limit / ankleJointDamping_);
       scalar_t actionMax = (jointVel(i) + robotCfg_.controlCfg.user_torque_limit / ankleJointDamping_);
       actions_[i] = std::max(actionMin / ankleJointDamping_, std::min(actionMax / ankleJointDamping_, (scalar_t)actions_[i]));
-      scalar_t velocity_des = actions_[i] * ankleJointDamping_;
-      hybridJointHandles_[i].setCommand(0, velocity_des, ankleJointStiffness_, ankleJointDamping_, 0, 0);
+      scalar_t pos_des = actions_[i] * robotCfg_.controlCfg.action_scale_pos + initJointAngles_(i, 0);
+      hybridJointHandles_[i].setCommand(pos_des, 0, ankleJointStiffness_, ankleJointDamping_, 0, 2);
     }
     lastActions_(i, 0) = actions_[i];
   }
@@ -226,6 +226,14 @@ bool SolefootCTSController::loadRLCfg() {
         ROS_ERROR_STREAM("Failed to load initial angle for joint: " << joint);
         return false;
       }
+    }
+
+    // Load normalization parameters
+    auto& rlCfg = robotCfg_.rlCfg;
+    if (!nh_.getParam("/SolefootCTSCfg/normalization/clip_scales/clip_actions", rlCfg.clipActions) ||
+        !nh_.getParam("/SolefootCTSCfg/normalization/clip_scales/clip_observations", rlCfg.clipObs)) {
+      ROS_ERROR("Failed to load clip scales parameters");
+      return false;
     }
 
     // Load control parameters
