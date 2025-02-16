@@ -67,6 +67,7 @@ private:
 
   bool isFirstRecObs_{true};
   double gaitIndex_{0};
+  ros::Time timeStamp;
 };
 
 } // namespace robot_controller

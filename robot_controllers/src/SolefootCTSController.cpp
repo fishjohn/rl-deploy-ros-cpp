@@ -12,6 +12,7 @@ void SolefootCTSController::starting(const ros::Time& time) {
   standPercent_ += 1 / (standDuration_ * loopFrequency_);
   loopCount_ = 0;
   mode_ = Mode::STAND;
+  timeStamp = ros::Time::now();
 }
 
 void SolefootCTSController::handleWalkMode() {
@@ -21,6 +22,11 @@ void SolefootCTSController::handleWalkMode() {
   }
 
   if (loopCount_ % robotCfg_.controlCfg.decimation == 0) {
+    ros::Time currentTime = ros::Time::now();
+    double frequency = 1.0 / (currentTime - timeStamp).toSec();
+    ROS_INFO_THROTTLE(2.0, "step frequency: %.2f Hz", frequency);
+    timeStamp = currentTime;
+
     computeObservation();
     computeLatent();
     computeActions();
