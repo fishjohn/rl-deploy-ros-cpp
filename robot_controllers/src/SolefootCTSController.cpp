@@ -40,7 +40,7 @@ void SolefootCTSController::handleWalkMode() {
   }
 
   for (size_t i = 0; i < hybridJointHandles_.size(); i++) {
-    if ((i + 1) % 4 != 0) {  // Not ankle joint
+    if (i < 6) {  // Not ankle joint
       scalar_t actionMin =
           jointPos(i) - initJointAngles_(i, 0) +
           (robotCfg_.controlCfg.damping * jointVel(i) - robotCfg_.controlCfg.user_torque_limit) / robotCfg_.controlCfg.stiffness;
@@ -135,12 +135,16 @@ void SolefootCTSController::computeObservation() {
     jointVel(i) = hybridJointHandles_[i].getVelocity();
   }
 
+  matrix_t commandScaler =
+      Eigen::DiagonalMatrix<scalar_t, 3>(robotCfg_.userCmdCfg.linVel_x, robotCfg_.userCmdCfg.linVel_y, robotCfg_.userCmdCfg.angVel_yaw);
+  vector3_t scaled_commands = commandScaler * commands_;
+
   // Get last actions
   vector_t actions(lastActions_);
 
   // Construct observation vector
   vector_t obs(observationsSize_);
-  obs << baseAngVel, projectedGravity, commands_, (jointPos - initJointAngles_), jointVel, actions;
+  obs << baseAngVel, projectedGravity, scaled_commands, (jointPos - initJointAngles_), jointVel, actions;
 
   // Update observations
   for (size_t i = 0; i < obs.size(); i++) {
@@ -262,6 +266,13 @@ bool SolefootCTSController::loadRLCfg() {
         !nh_.getParam("/SolefootCTSCfg/imu_orientation_offset/pitch", imu_orientation_offset[1]) ||
         !nh_.getParam("/SolefootCTSCfg/imu_orientation_offset/roll", imu_orientation_offset[2])) {
       ROS_ERROR("Failed to load imu orientation offset");
+      return false;
+    }
+
+    if (!nh_.getParam("/SolefootCTSCfg/user_cmd_scales/lin_vel_x", robotCfg_.userCmdCfg.linVel_x) ||
+        !nh_.getParam("/SolefootCTSCfg/user_cmd_scales/lin_vel_y", robotCfg_.userCmdCfg.linVel_y) ||
+        !nh_.getParam("/SolefootCTSCfg/user_cmd_scales/ang_vel_yaw", robotCfg_.userCmdCfg.angVel_yaw)) {
+      ROS_ERROR("Failed to load user command scales");
       return false;
     }
 
