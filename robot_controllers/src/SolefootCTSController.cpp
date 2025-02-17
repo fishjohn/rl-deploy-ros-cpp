@@ -24,7 +24,8 @@ void SolefootCTSController::handleWalkMode() {
   if (loopCount_ % robotCfg_.controlCfg.decimation == 0) {
     ros::Time currentTime = ros::Time::now();
     double frequency = 1.0 / (currentTime - timeStamp).toSec();
-    ROS_INFO_THROTTLE(2.0, "step frequency: %.2f Hz", frequency);
+    // ROS_INFO_THROTTLE(2.0, "step frequency: %.2f Hz", frequency);
+    ROS_INFO("step frequency: %.2f Hz", frequency);
     timeStamp = currentTime;
 
     computeObservation();
