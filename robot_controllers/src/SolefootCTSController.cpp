@@ -149,9 +149,23 @@ void SolefootCTSController::computeObservation() {
   // Get last actions
   vector_t actions(lastActions_);
 
+  // Calculate gait
+  vector_t gait_clock(2);
+  gait_clock << sin(gaitIndex_ * 2 * M_PI), cos(gaitIndex_ * 2 * M_PI);
+  vector_t gait(3);
+  gait << 1.2, 0.5, 0.6;  // trot gait parameters
+  gaitIndex_ += 0.02 * gait(0);
+  if (gaitIndex_ > 1.0) {
+    gaitIndex_ = 0.0;
+  }
+
   // Construct observation vector
   vector_t obs(observationsSize_);
-  obs << baseAngVel, projectedGravity, scaled_commands, (jointPos - initJointAngles_), jointVel, actions;
+  if (observationsSize_ == 38) {
+    obs << baseAngVel, projectedGravity, scaled_commands, (jointPos - initJointAngles_), jointVel, actions, gait_clock, gait;
+  } else {
+    obs << baseAngVel, projectedGravity, scaled_commands, (jointPos - initJointAngles_), jointVel, actions;
+  }
 
   // Update observations
   for (size_t i = 0; i < obs.size(); i++) {
