@@ -3,6 +3,7 @@
     <param name="robot_type" value="$(env ROBOT_TYPE)"/>
 
     <arg name="plot" default="false"/>
+    <arg name="joy" default="false"/>
 
     <param name="use_gazebo" value="true"/>
 
@@ -10,7 +11,7 @@
     <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
 
     <!-- Add date parameter with default value -->
-    <arg name="policy_date" default="jpd_gait"/>
+    <arg name="policy_date" default="actuatorModel"/>
 
     <!-- Load ONNX model paths with date parameter -->
     <param name="policyFile" value="$(find robot_controllers)/config/solefoot_cts/policy/$(arg policy_date)/policy.onnx"/>
@@ -32,16 +33,18 @@
     <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering" respawn="false"/>
     <include if="$(arg plot)" file="$(find robot_visualization)/launch/solefoot_plot_sim.launch"/>
 
-    <arg name="joy_dev" default="/dev/input/js0"/>
-    <arg name="teleop_config" default="$(find robot_hw)/config/joystick_sim.yaml"/>
+    <group if="$(arg joy)">
+        <arg name="joy_dev" default="/dev/input/js0"/>
+        <arg name="teleop_config" default="$(find robot_hw)/config/joystick_sim.yaml"/>
 
-    <node pkg="joy" type="joy_node" name="joy_node">
-        <param name="dev" value="$(arg joy_dev)"/>
-        <param name="deadzone" value="1e-3"/>
-        <param name="autorepeat_rate" value="10"/>
-        <param name="coalesce_interval" value="0.05"/>
-    </node>
+        <node pkg="joy" type="joy_node" name="joy_node">
+            <param name="dev" value="$(arg joy_dev)"/>
+            <param name="deadzone" value="1e-3"/>
+            <param name="autorepeat_rate" value="10"/>
+            <param name="coalesce_interval" value="0.05"/>
+        </node>
 
-    <rosparam file="$(arg teleop_config)" command="load"/>
-    <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop"/>
+        <rosparam file="$(arg teleop_config)" command="load"/>
+        <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop"/>
+    </group>
 </launch> 
