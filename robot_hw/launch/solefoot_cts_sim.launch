@@ -11,7 +11,7 @@
     <rosparam file="$(find robot_controllers)/config/controllers.yaml" command="load"/>
 
     <!-- Add date parameter with default value -->
-    <arg name="policy_date" default="2025-03-01_21-22-50_dofvel"/>
+    <arg name="policy_date" default="2025-03-03_20-43-32_rse10%"/>
 
     <!-- Load ONNX model paths with date parameter -->
     <param name="policyFile" value="$(find robot_controllers)/config/solefoot_cts/policy/$(arg policy_date)/policy.onnx"/>
