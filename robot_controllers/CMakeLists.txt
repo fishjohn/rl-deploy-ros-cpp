@@ -65,11 +65,13 @@ add_library(pointfoot_vision_controller
         src/ControllerBase.cpp
         src/PointfootController.cpp
         src/PointfootVisionController.cpp
+        src/PointfootCTSVisionController.cpp
 )
 
 add_library(pointfoot_cts_vision_controller
         src/ControllerBase.cpp
         src/PointfootController.cpp
+        src/PointfootVisionController.cpp
         src/PointfootCTSVisionController.cpp
 )
 
@@ -124,3 +126,7 @@ install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES robot_cts_vision_controllers_plugins.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+# Set build type and CXX flags
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")

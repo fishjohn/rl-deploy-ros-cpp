@@ -11,7 +11,7 @@
     <param name="depthImageTopicName" value="/d435F/aligned_depth_to_color/image_raw"/>
 
     <!-- Add date parameter with default value -->
-    <arg name="policy_date" default="20250214_10000"/>
+    <arg name="policy_date" default="20250325steppingstones"/>
 
     <!-- Load ONNX model paths with date parameter -->
     <param name="policyFile"
@@ -55,4 +55,17 @@
 
     <rosparam file="$(arg teleop_config)" command="load"/>
     <node pkg="joy_teleop" type="joy_teleop.py" name="joy_teleop"/>
+
+    <!-- 添加调试参数 -->
+    <arg name="debug" default="false"/>
+    <arg unless="$(arg debug)" name="launch_prefix" value=""/>
+    <arg if="$(arg debug)" name="launch_prefix" value="gdb -ex run --args"/>
+
+    <!-- 在节点启动时添加调试前缀 -->
+    <node name="pointfoot_cts_vision_controller" 
+          pkg="robot_controllers" 
+          type="pointfoot_cts_vision_controller" 
+          output="screen"
+          launch-prefix="$(arg launch_prefix)">
+    </node>
 </launch>

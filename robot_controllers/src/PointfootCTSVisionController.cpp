@@ -264,7 +264,8 @@ void PointfootCTSVisionController::computeObservation() {
 
   // Construct observation vector
   vector_t obs(observationsSize_);
-  obs << baseAngVel, projectedGravity, commands_, (jointPos - initJointAngles_), jointVel, actions, gait_clock, gait;
+  // obs << baseAngVel, projectedGravity, commands_, (jointPos - initJointAngles_), jointVel, actions, gait_clock, gait;
+  obs << baseAngVel, projectedGravity, commands_, (jointPos - initJointAngles_), jointVel, actions;
 
   // Update raw observations
   for (size_t i = 0; i < obs.size(); i++) {
